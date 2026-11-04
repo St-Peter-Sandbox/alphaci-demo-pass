@@ -1,0 +1,235 @@
+# The same reusable workflows AlphaCI calls, pinned to the verified v1 commit.
+# Strict checks only. No ALPHACI_TOKEN, callbacks, release registration or deployment.
+name: AlphaCI demo preflight (strict, no deployment)
+'on':
+  push:
+    branches:
+      - main
+      - dev
+      - uat
+  pull_request: {}
+  workflow_dispatch: {}
+permissions:
+  contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  policy:
+    uses: Alpha-Explora/alphaci-workflow/.github/workflows/branch-policy.yml@b107b06612c698fba7fd17463b2ffb3b575a87ee
+    with:
+      branch: main
+      base-coverage-threshold: 85
+  frontend-tests:
+    uses: Alpha-Explora/alphaci-workflow/.github/workflows/frontend-tests.yml@b107b06612c698fba7fd17463b2ffb3b575a87ee
+    with:
+      working-directory: frontend
+      system-name: OrderDesk-Frontend
+      node-version: 24
+      unit-tests-directory: tests/unit
+      coverage-threshold: 95
+      enforce-coverage: true
+      test-command: >-
+        npm run test -- --coverage --coverageReporters=json-summary --coverageReporters=lcov --json
+        --outputFile=test-results.json
+  frontend-lint:
+    uses: Alpha-Explora/alphaci-workflow/.github/workflows/lint-check.yml@b107b06612c698fba7fd17463b2ffb3b575a87ee
+    with:
+      working-directory: frontend
+      system-name: OrderDesk-Frontend
+      node-version: 24
+      lint-command: npm run lint
+      fail-on-warning: true
+  frontend-types:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck
+      - run: npm run build
+  frontend-audit:
+    uses: Alpha-Explora/alphaci-workflow/.github/workflows/security-scan.yml@b107b06612c698fba7fd17463b2ffb3b575a87ee
+    with:
+      working-directory: frontend
+      system-name: OrderDesk-Frontend
+      node-version: 24
+      fail-on-high: true
+  frontend-sonar:
+    uses: Alpha-Explora/alphaci-workflow/.github/workflows/sonarcloud-scan.yml@b107b06612c698fba7fd17463b2ffb3b575a87ee
+    with:
+      working-directory: frontend
+      system-name: OrderDesk-Frontend
+      sources-path: src
+      tests-path: tests
+      coverage-report-path: coverage/lcov.info
+      coverage-artifact-name: OrderDesk-Frontend-coverage
+      quality-gate-wait: true
+    needs:
+      - frontend-tests
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+      SONAR_PROJECT_KEY: ${{ secrets.FRONTEND_SONAR_PROJECT_KEY }}
+  backend-tests:
+    uses: Alpha-Explora/alphaci-workflow/.github/workflows/dotnet-test.yml@b107b06612c698fba7fd17463b2ffb3b575a87ee
+    with:
+      working-directory: backend
+      system-name: OrderDesk-Backend
+      dotnet-version: 10.0.x
+      solution-path: OrderDesk.sln
+      coverage-threshold: 95
+      enforce-coverage: true
+  backend-format:
+    uses: Alpha-Explora/alphaci-workflow/.github/workflows/dotnet-format.yml@b107b06612c698fba7fd17463b2ffb3b575a87ee
+    with:
+      working-directory: backend
+      system-name: OrderDesk-Backend
+      dotnet-version: 10.0.x
+      solution-path: OrderDesk.sln
+      fail-on-warning: true
+  backend-analyzers:
+    uses: Alpha-Explora/alphaci-workflow/.github/workflows/dotnet-analyze.yml@b107b06612c698fba7fd17463b2ffb3b575a87ee
+    with:
+      working-directory: backend
+      system-name: OrderDesk-Backend
+      dotnet-version: 10.0.x
+      solution-path: OrderDesk.sln
+      treat-warnings-as-errors: true
+  backend-audit:
+    uses: Alpha-Explora/alphaci-workflow/.github/workflows/dotnet-audit.yml@b107b06612c698fba7fd17463b2ffb3b575a87ee
+    with:
+      working-directory: backend
+      system-name: OrderDesk-Backend
+      dotnet-version: 10.0.x
+      solution-path: OrderDesk.sln
+      fail-on-severity: high
+  secrets:
+    uses: Alpha-Explora/alphaci-workflow/.github/workflows/gitleaks-scan.yml@b107b06612c698fba7fd17463b2ffb3b575a87ee
+    with:
+      working-directory: .
+      system-name: OrderDesk
+      fail-on-findings: true
+  backend-licenses:
+    uses: Alpha-Explora/alphaci-workflow/.github/workflows/dotnet-license-scan.yml@b107b06612c698fba7fd17463b2ffb3b575a87ee
+    with:
+      working-directory: backend
+      system-name: OrderDesk-Backend
+      dotnet-version: 10.0.x
+      solution-path: OrderDesk.sln
+      fail-on-forbidden: true
+  backend-sbom:
+    uses: Alpha-Explora/alphaci-workflow/.github/workflows/dotnet-sbom.yml@b107b06612c698fba7fd17463b2ffb3b575a87ee
+    with:
+      working-directory: backend
+      system-name: OrderDesk-Backend
+      dotnet-version: 10.0.x
+      solution-path: OrderDesk.sln
+      require-sbom: true
+  backend-sonar:
+    uses: Alpha-Explora/alphaci-workflow/.github/workflows/sonarcloud-dotnet-scan.yml@b107b06612c698fba7fd17463b2ffb3b575a87ee
+    with:
+      working-directory: backend
+      system-name: OrderDesk-Backend
+      dotnet-version: 10.0.x
+      solution-path: OrderDesk.sln
+      coverage-artifact-name: OrderDesk-Backend-coverage
+      quality-gate-wait: true
+    needs:
+      - backend-tests
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+      SONAR_PROJECT_KEY: ${{ secrets.BACKEND_SONAR_PROJECT_KEY }}
+  frontend-browser:
+    uses: Alpha-Explora/alphaci-workflow/.github/workflows/playwright-e2e.yml@b107b06612c698fba7fd17463b2ffb3b575a87ee
+    with:
+      working-directory: frontend
+      system-name: OrderDesk-Frontend
+      node-version: '24'
+      run-only-on-branch: '*'
+      e2e-tests-directory: tests/e2e
+      browser-list: '["chromium"]'
+      test-command: npm run test:e2e
+  api-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Start API on the temporary runner
+        run: >-
+          dotnet run --project backend/src/OrderDesk/OrderDesk.csproj --configuration Release --urls
+          http://127.0.0.1:5079 > "$RUNNER_TEMP/order-api.log" 2>&1 &
+
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:5079/health; then exit 0; fi
+            sleep 2
+          done
+
+          cat "$RUNNER_TEMP/order-api.log"
+
+          exit 1
+      - name: Run the real Bruno API collection
+        working-directory: backend/tests/api
+        run: >-
+          npx --yes @usebruno/cli@4.1.0 run smoke --env-var BASE_URL=http://127.0.0.1:5079 --reporter-json
+          "$RUNNER_TEMP/bruno-results.json"
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: OrderDesk-API-smoke
+          path: ${{ runner.temp }}/bruno-results.json
+  container-builds:
+    runs-on: ubuntu-latest
+    needs:
+      - frontend-tests
+      - frontend-lint
+      - frontend-types
+      - frontend-audit
+      - frontend-sonar
+      - backend-tests
+      - backend-format
+      - backend-analyzers
+      - backend-audit
+      - secrets
+      - backend-licenses
+      - backend-sbom
+      - backend-sonar
+      - frontend-browser
+      - api-smoke
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build React image without publishing
+        run: docker build --tag order-desk-frontend:demo frontend
+      - name: Build .NET image without publishing
+        run: docker build --tag order-desk-backend:demo backend
+      - name: Smoke-test both containers on the temporary runner
+        run: >-
+          docker run -d --name demo-api -p 18081:8080 order-desk-backend:demo
+
+          docker run -d --name demo-web -p 18080:8080 order-desk-frontend:demo
+
+          for port in 18080 18081; do
+            ready=false
+            for attempt in $(seq 1 30); do
+              if curl --fail --silent "http://127.0.0.1:$port/health"; then ready=true; break; fi
+              sleep 2
+            done
+            test "$ready" = true
+          done
+
+          curl --fail --silent -H "Content-Type: application/json" --data '{"quantity":10,"unitPriceCents":25000}'
+          http://127.0.0.1:18081/api/quotes | jq -e ' .discountCents == 25000 and .totalCents == 225000'
+
+          docker rm -f demo-api demo-web

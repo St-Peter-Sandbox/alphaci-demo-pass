@@ -1,0 +1,21 @@
+meta {
+  name: Exactly ten items receive a ten percent discount
+  type: http
+  seq: 2
+}
+post {
+  url: {{BASE_URL}}/api/quotes
+  body: json
+  auth: none
+}
+headers {
+  Content-Type: application/json
+}
+body:json {
+  {"quantity":10,"unitPriceCents":25000}
+}
+assert {
+  res.status: 200
+  res.body.discountCents: 25000
+  res.body.totalCents: 225000
+}

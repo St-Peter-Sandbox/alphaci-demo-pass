@@ -1,0 +1,13 @@
+meta {
+  name: OpenAPI contract
+  type: http
+  seq: 3
+}
+get {
+  url: {{BASE_URL}}/openapi/v1.json
+  body: none
+  auth: none
+}
+assert {
+  res.status: 200
+}

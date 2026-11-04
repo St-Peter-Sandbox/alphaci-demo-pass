@@ -1,0 +1,31 @@
+:root { font-family: Arial, Helvetica, sans-serif; color: #192434; background: #f4f6fa; font-synthesis: none; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+.desk { width: min(1080px, calc(100% - 48px)); margin: auto; }
+header { display: flex; justify-content: space-between; align-items: center; padding: 30px 0; border-bottom: 1px solid #d8dfeb; }
+.brand { font-size: 22px; font-weight: 800; color: #155eef; text-decoration: none; }
+.workspace, .field-note, footer, .receipt-note { color: #526175; font-size: 14px; }
+.intro { max-width: 710px; padding: 55px 0 35px; }
+.section-name { color: #155eef; font-weight: 700; }
+h1 { font-size: clamp(32px, 4.5vw, 48px); line-height: 1.1; letter-spacing: -1.4px; margin: 12px 0 20px; }
+.intro > p:last-child { line-height: 1.7; color: #526175; }
+.quote-layout { display: grid; grid-template-columns: 1fr 1fr; background: white; border: 1px solid #d8dfeb; border-radius: 14px; overflow: hidden; }
+.quote-form, .receipt { padding: 34px; }
+.receipt { background: #edf3ff; border-left: 1px solid #d8dfeb; }
+h2 { font-size: 20px; margin: 0 0 28px; }
+label { display: block; font-size: 14px; font-weight: 700; margin: 22px 0 9px; }
+input { width: 100%; padding: 14px; border: 1px solid #9ba8bc; border-radius: 6px; color: inherit; font: inherit; background: white; }
+input:focus-visible, button:focus-visible, a:focus-visible { outline: 3px solid #89b1ff; outline-offset: 3px; }
+.field-note { margin: 7px 0 24px; }
+button { width: 100%; margin-top: 28px; padding: 15px; border: 0; border-radius: 6px; color: white; background: #155eef; font: inherit; font-weight: 700; cursor: pointer; }
+button:hover { background: #0d46b6; }
+button:disabled { opacity: .65; cursor: wait; }
+dl { margin-top: 36px; }
+dl > div { display: flex; justify-content: space-between; gap: 20px; padding: 12px 0; }
+dd { margin: 0; font-weight: 700; }
+.total { display: flex; flex-direction: column; gap: 12px; border-top: 1px solid #b6c9ee; padding-top: 25px; margin-top: 22px; }
+output { font-size: 38px; font-weight: 800; letter-spacing: -1px; color: #0d46b6; }
+.receipt-note, .empty { line-height: 1.7; }
+.error { color: #a61b2b; line-height: 1.6; }
+footer { padding: 25px 0 40px; line-height: 1.6; }
+@media (max-width: 640px) { .desk { width: calc(100% - 28px); } .quote-layout { grid-template-columns: 1fr; } .quote-form, .receipt { padding: 25px; } .receipt { border-left: 0; border-top: 1px solid #d8dfeb; } .workspace { display: none; } }
