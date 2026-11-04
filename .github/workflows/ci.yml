@@ -107,7 +107,7 @@ jobs:
       working-directory: backend
       system-name: OrderDesk-Backend
       dotnet-version: 10.0.x
-      solution-path: OrderDesk.sln
+      solution-path: ''
       fail-on-severity: high
   secrets:
     uses: Alpha-Explora/alphaci-workflow/.github/workflows/gitleaks-scan.yml@b107b06612c698fba7fd17463b2ffb3b575a87ee

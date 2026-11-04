@@ -46,8 +46,9 @@ function Copy-App([string] $Kind, [string] $Destination) {
 
     $sourceRoot = [IO.Path]::GetFullPath($source).TrimEnd('\', '/')
     Get-ChildItem -LiteralPath $sourceRoot -Recurse -File -Force | Where-Object {
-        $_.FullName -notmatch '[\\/](node_modules|bin|obj|coverage|dist|TestResults|test-results|playwright-report)[\\/]' -and
-        $_.Name -ne 'test-results.json'
+        $_.FullName -notmatch '[\\/](node_modules|bin|obj|coverage|dist|TestResults[^\\/]*|test-results|playwright-report|\.git|\.github)[\\/]' -and
+        $_.Name -ne 'test-results.json' -and
+        ($_.Name -notmatch '^\.env($|\.)' -or $_.Name -eq '.env.example')
     } | ForEach-Object {
         $relative = $_.FullName.Substring($sourceRoot.Length).TrimStart('\', '/')
         if ($relative -in @('sonar-project.properties', '.editorconfig') -and (Test-Path -LiteralPath (Join-Path $target $relative))) { return }
